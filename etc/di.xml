@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <preference for="Lovat\Api\Api\OrdersRepositoryInterface"
+                type="Lovat\Api\Model\OrdersRepository"/>
+    <preference for="Lovat\Api\Api\Data\OrdersDataContainerInterface"
+                type="Lovat\Api\Model\OrdersDataContainer"/>
+    <preference for="Lovat\Api\Api\Data\OrdersDataInterface"
+                type="Lovat\Api\Model\OrdersData"/>
+</config>

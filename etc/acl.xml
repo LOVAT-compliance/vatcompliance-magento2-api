@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Acl/etc/acl.xsd">
+    <acl>
+        <resources>
+            <resource id="Magento_Backend::admin">
+                <resource id="Lovat_Api::permission" title="Lovat Api" sortOrder="100">
+                    <resource id="Lovat_Api::orders" title="Lovat Api orders" sortOrder="101"/>
+                </resource>
+            </resource>
+        </resources>
+    </acl>
+</config>
