@@ -24,4 +24,4 @@ php bin/magento setup:di:compile
 php bin/magento cache:clean
 ```
 
-Next, create a new integration for API requests. In more detail how to create an integration is described [Здесь](https://www.mageplaza.com/kb/how-to-create-new-api-information-for-integration-magento-2.html)
+Next, create a new integration for API requests. In more detail how to create an integration is described [Here](https://www.mageplaza.com/kb/how-to-create-new-api-information-for-integration-magento-2.html)
