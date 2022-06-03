@@ -1,0 +1,12 @@
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="techflarestudio_product" engine="innodb" comment="Lovat api log table">
+        <column xsi:type="int" name="log_id" unsigned="true" nullable="false" identity="true" comment="Log id"/>
+        <column xsi:type="text" name="status" nullable="true" comment="Status"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP"
+                comment="Created At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="log_id"/>
+        </constraint>
+    </table>
+</schema>

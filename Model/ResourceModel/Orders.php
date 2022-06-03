@@ -7,7 +7,7 @@ class Orders extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
     /**
      * @var string
      */
-    const TABLE_NAME = 'lovat_api_log';
+    public const TABLE_NAME = 'lovat_api_log';
 
     /**
      * Resource initialization

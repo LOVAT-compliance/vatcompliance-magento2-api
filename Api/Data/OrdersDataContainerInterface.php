@@ -5,12 +5,16 @@ namespace Lovat\Api\Api\Data;
 interface OrdersDataContainerInterface
 {
     /**
-     * @return \Lovat\Api\Api\Data\OrdersDataInterface
+     * Get api Data
+     *
+     * @return OrdersDataInterface
      */
     public function getApiData();
 
     /**
-     * @param \Lovat\Api\Api\Data\OrdersDataInterface $data
+     * Set Api data
+     *
+     * @param OrdersDataInterface $data
      * @return $this
      */
     public function setApiData(OrdersDataInterface $data);
