@@ -7,6 +7,7 @@ use Lovat\Api\Api\Data\OrdersDataContainerInterfaceFactory;
 use Lovat\Api\Api\Data\OrdersDataInterface;
 use Lovat\Api\Api\Data\OrdersDataInterfaceFactory;
 use Lovat\Api\Helper\Data;
+use Lovat\Api\Model\Configuration as LovatConfiguration;
 use Lovat\Api\Model\ResourceModel\Orders as OrdersResource;
 use Magento\Framework\Webapi\Exception as ErrorException;
 use Magento\Sales\Model\Order;
@@ -41,6 +42,11 @@ class OrdersRepository
     protected $ordersDataFactory;
 
     /**
+     * @var LovatConfiguration
+     */
+    protected $lovatConfiguration;
+
+    /**
      * Construct
      *
      * @param Data $helper
@@ -48,19 +54,22 @@ class OrdersRepository
      * @param OrdersResource $ordersResource
      * @param OrdersDataContainerInterfaceFactory $ordersDataContainerFactory
      * @param OrdersDataInterfaceFactory $ordersDataFactory
+     * @param Configuration $lovatConfiguration
      */
     public function __construct(
         Data $helper,
         OrderCollection $orderCollectionFactory,
         OrdersResource $ordersResource,
         OrdersDataContainerInterfaceFactory $ordersDataContainerFactory,
-        OrdersDataInterfaceFactory $ordersDataFactory
+        OrdersDataInterfaceFactory $ordersDataFactory,
+        LovatConfiguration $lovatConfiguration
     ) {
         $this->orderCollectionFactory = $orderCollectionFactory;
         $this->ordersResource = $ordersResource;
         $this->helper = $helper;
         $this->ordersDataContainerFactory = $ordersDataContainerFactory;
         $this->ordersDataFactory = $ordersDataFactory;
+        $this->lovatConfiguration = $lovatConfiguration;
     }
 
     /**
@@ -70,7 +79,8 @@ class OrdersRepository
      * @param string $to
      * @param int $p
      * @return OrdersDataContainerInterface
-     * @throws Exception
+     * @throws ErrorException
+     * @throws \Exception
      */
     public function get(string $from, string $to, int $p)
     {
@@ -80,7 +90,7 @@ class OrdersRepository
                 __("Problem with data, please complete required parameters such as 
                     'from' and 'to' or make sure the date format is correct"),
                 400,
-				ErrorException::HTTP_BAD_REQUEST
+                ErrorException::HTTP_BAD_REQUEST
             );
         } else {
             $collection = $this->orderCollectionFactory->create()
@@ -124,6 +134,11 @@ class OrdersRepository
                 $ordersDataContainer = $this->ordersDataContainerFactory->create();
                 $ordersDataFactory = $this->ordersDataFactory->create();
 
+                $departureAddress[] = [
+                    'departure_country' => $this->helper->convertCountry($this->lovatConfiguration->getDepartureCountry()),
+                    'departure_zip' => $this->lovatConfiguration->getDepartureZip()
+                ];
+                $ordersDataFactory->setDepartureAddress($departureAddress);
                 $ordersDataFactory->setRemainingData($remainingData);
                 $ordersDataFactory->setOrders($data);
                 $ordersDataContainer->setApiData($ordersDataFactory);
@@ -134,7 +149,7 @@ class OrdersRepository
                 throw new ErrorException(
                     __("Could not find data for your request"),
                     200,
-					ErrorException::HTTP_NOT_FOUND
+                    ErrorException::HTTP_NOT_FOUND
                 );
             }
         }

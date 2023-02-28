@@ -1,0 +1,42 @@
+<script>
+    function testApiSettings() {
+        require([
+            'jquery',
+            'mage/url',
+            'Magento_Ui/js/modal/alert'
+        ], function ($, urlBuilder, malert) {
+            'use strict';
+
+            const data = {
+                'country': document.getElementById('lovat_settings_departure_country').value,
+                'zipCode': document.getElementById('lovat_settings_departure_zip').value,
+                'api_key': document.getElementById('lovat_settings_api_key').value,
+                'form_key': window.FORM_KEY
+            };
+            const url = "<?php echo $block->getUrl('lovat_api/settings/ajax')?>";
+
+            $.ajax({
+                showLoader: true,
+                url: url,
+                method: 'POST',
+                data: data
+            }).done(function (data) {
+                let title = 'Successful';
+                if (data.success === false) {
+                    title = 'Error';
+                }
+                showAlert(data.message, title)
+            }).fail(function (response) {
+                showAlert('Critical error.', 'Error')
+            });
+
+            function showAlert(message, title) {
+                malert({
+                    title: title,
+                    content: message,
+                    clickableOverlay: false,
+                });
+            }
+        });
+    }
+</script>

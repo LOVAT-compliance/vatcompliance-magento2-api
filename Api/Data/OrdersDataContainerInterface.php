@@ -7,7 +7,7 @@ interface OrdersDataContainerInterface
     /**
      * Get api Data
      *
-     * @return OrdersDataInterface
+     * @return \Lovat\Api\Api\Data\OrdersDataInterface
      */
     public function getApiData();
 

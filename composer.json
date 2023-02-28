@@ -2,7 +2,7 @@
     "name": "lovat/module-lovat",
     "description": "Lovat Api Sales Module for Magento 2",
     "type": "magento2-module",
-    "version": "1.0.7",
+    "version": "1.0.8",
     "license": "OSL-3.0",
     "require": {
         "magento/framework": "^104.0.*"

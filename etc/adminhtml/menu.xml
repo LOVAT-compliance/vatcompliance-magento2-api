@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="Lovat_Api::api" title="Lovat" module="Lovat_Api" sortOrder="51" resource="Lovat_Api::api"/>
+        <add id="Lovat_Api::settings" title="Settings" module="Lovat_Api" sortOrder="10"
+             action="lovat_api/settings" resource="Lovat_Api::settings"
+             parent="Lovat_Api::api"/>
+    </menu>
+</config>

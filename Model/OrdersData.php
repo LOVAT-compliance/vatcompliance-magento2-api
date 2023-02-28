@@ -26,6 +26,14 @@ class OrdersData extends DataObject implements OrdersDataInterface
     /**
      * @inheritDoc
      */
+    public function getDepartureAddress()
+    {
+        return $this->getData(self::DEPARTURE_ADDRESS);
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function setRemainingData(array $remainingData)
     {
         return $this->setData(self::REMAINING_DATA, $remainingData);
@@ -37,5 +45,14 @@ class OrdersData extends DataObject implements OrdersDataInterface
     public function setOrders(array $orders)
     {
         return $this->setData(self::ORDERS, $orders);
+    }
+
+    /**
+     * @param array $departureAddress
+     * @return OrdersData|mixed
+     */
+    public function setDepartureAddress(array $departureAddress)
+    {
+        return $this->setData(self::DEPARTURE_ADDRESS, $departureAddress);
     }
 }

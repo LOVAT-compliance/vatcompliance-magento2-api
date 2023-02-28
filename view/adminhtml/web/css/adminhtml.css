@@ -1,0 +1,22 @@
+.admin__menu #menu-lovat-api-api.level-0 > a:before {
+    background-image: url('../images/logo.png');
+    background-repeat: no-repeat;
+    background-size: 30px 20px;
+    display: block;
+    margin: 0 auto;
+    width: 30px;
+    height: 30px;
+    content:"";
+}
+
+.admin__menu #menu-lovat-api-api.level-0 a{
+    padding-top:20px;
+}
+
+#menu-lovat-api-api.level-0 a:first-child span{
+    display: none;
+}
+
+#menu-lovat-api-api.level-0 .submenu span{
+    display: block !important;
+}

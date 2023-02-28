@@ -1,12 +1,26 @@
 <schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
-    <table name="techflarestudio_product" engine="innodb" comment="Lovat api log table">
+    <table name="lovat_api_log" engine="innodb" comment="Lovat api log table">
         <column xsi:type="int" name="log_id" unsigned="true" nullable="false" identity="true" comment="Log id"/>
         <column xsi:type="text" name="status" nullable="true" comment="Status"/>
         <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP"
                 comment="Created At"/>
         <constraint xsi:type="primary" referenceId="PRIMARY">
             <column name="log_id"/>
+        </constraint>
+    </table>
+    <table name="lovat_settings" engine="innodb" comment="Lovat api settings table">
+        <column xsi:type="int" name="id" unsigned="true" nullable="false" identity="true" comment="ID PK"/>
+        <column xsi:type="int" name="departure_zip" unsigned="true" nullable="false"
+                comment="departure zip code"/>
+        <column xsi:type="varchar" name="departure_country" length="50" nullable="false"
+                comment="departure country"/>
+        <column xsi:type="varchar" name="api_key" length="255" nullable="false"
+                comment="api key"/>
+        <column xsi:type="varchar" name="calculate_tax" length="1" nullable="false" default="0"
+                comment="calculate_tax"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="id"/>
         </constraint>
     </table>
 </schema>
