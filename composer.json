@@ -5,7 +5,8 @@
     "version": "1.0.8",
     "license": "OSL-3.0",
     "require": {
-        "magento/framework": "^104.0.*"
+        "php": ">=7.2",
+        "magento/framework": ">=100.0.4"
     },
     "autoload": {
         "files": [
