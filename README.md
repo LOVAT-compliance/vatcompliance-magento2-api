@@ -7,7 +7,7 @@ Magento 2 REST API Lovat Api
 
 Download the extension as a ZIP file from this repository or install our module from [Composer](https://getcomposer.org/), using the following command:
 
-```composer require lovat/module-lovat```
+```composer require vatcompliance/module-vatcompliance```
 
 then run the following commands
 ```
