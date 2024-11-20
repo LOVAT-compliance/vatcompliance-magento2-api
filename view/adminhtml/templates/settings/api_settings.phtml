@@ -27,7 +27,7 @@
                 }
                 showAlert(data.message, title)
             }).fail(function (response) {
-                showAlert('Something was wrong. Please enter correctly data.', 'Error')
+                showAlert('Invalid api_key', 'Error')
             });
 
             function showAlert(message, title) {
