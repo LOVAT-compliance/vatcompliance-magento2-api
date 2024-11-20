@@ -80,7 +80,7 @@ class Form extends Generic
                 'required' => false,
                 'value' => $settingsData['departure_zip'],
 //                 'class' => 'validate-number',
-//                 'maxlength' => '7'
+                'maxlength' => '20'
             ]
         );
 
