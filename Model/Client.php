@@ -85,8 +85,17 @@ class Client
      * @param string $method
      * @return integer|boolean
      */
-    private function doRequest($url, array $params, $method = \Zend_Http_Client::POST)
+    private function doRequest($url, array $params, $method = null)
     {
+        if (class_exists(\Laminas\Http\Client::class)) {
+            $clientClass = \Laminas\Http\Client::class;
+            $method = $method ?? \Laminas\Http\Request::METHOD_POST;
+        } elseif (class_exists(\Zend_Http_Client::class)) {
+            $clientClass = \Zend_Http_Client::class;
+            $method = $method ?? \Zend_Http_Client::POST;
+        } else {
+            throw new \RuntimeException('Neither Laminas\Http\Client nor Zend_Http_Client is available.');
+        }
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);

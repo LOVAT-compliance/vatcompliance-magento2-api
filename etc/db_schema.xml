@@ -11,7 +11,7 @@
     </table>
     <table name="lovat_settings" engine="innodb" comment="Lovat api settings table">
         <column xsi:type="int" name="id" unsigned="true" nullable="false" identity="true" comment="ID PK"/>
-        <column xsi:type="varchar" name="departure_zip" length="20" unsigned="true" nullable="false"
+        <column xsi:type="varchar" name="departure_zip" length="20" nullable="false"
                 comment="departure zip code"/>
         <column xsi:type="varchar" name="departure_country" length="50" nullable="false"
                 comment="departure country"/>
