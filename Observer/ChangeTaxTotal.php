@@ -9,6 +9,7 @@ use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Pricing\PriceCurrencyInterface;
+use Magento\Framework\App\CacheInterface;
 
 class ChangeTaxTotal implements ObserverInterface
 {
@@ -38,24 +39,39 @@ class ChangeTaxTotal implements ObserverInterface
     protected $lovatConfiguration;
 
     /**
+     * @var CacheInterface
+     */
+    private $cache;
+
+    /**
+     * Cache keys
+     */
+    private $cacheKeyAddress = 'last_address_hash';
+    private $cacheKeyTaxData = 'cached_tax_data';
+    private $cacheLifetime = 3600; // 1 час
+
+    /**
      * @param Data $helper
      * @param PriceCurrencyInterface $priceCurrency
      * @param JsonFactory $resultJsonFactory
      * @param Client $client
      * @param LovatConfiguration $lovatConfiguration
+     * @param CacheInterface $cache
      */
     public function __construct(
         Data $helper,
         PriceCurrencyInterface $priceCurrency,
         JsonFactory $resultJsonFactory,
         Client $client,
-        LovatConfiguration $lovatConfiguration
+        LovatConfiguration $lovatConfiguration,
+        CacheInterface $cache
     ) {
         $this->_priceCurrency = $priceCurrency;
         $this->helper = $helper;
         $this->resultJsonFactory = $resultJsonFactory;
         $this->client = $client;
         $this->lovatConfiguration = $lovatConfiguration;
+        $this->cache = $cache;
     }
 
     /**
@@ -75,85 +91,123 @@ class ChangeTaxTotal implements ObserverInterface
                 $shippingAddress = $quote->getShippingAddress();
                 $arrivalCountry = $this->helper->convertCountry($shippingAddress->getCountry());
                 $arrivalZip = $shippingAddress->getPostcode();
+                $vatId = $shippingAddress->getVatId();
+                if (is_array($vatId)) {
+                    $vatId = implode(', ', $vatId);
+                } elseif (empty($vatId)) {
+                    $vatId = 'none';
+                }
 
-                //if exist country and zip -> calculate tax
-                if (!empty($arrivalCountry) && !empty($arrivalZip)) {
+                if (!empty($arrivalCountry) && $arrivalCountry === 'USA' && empty($arrivalZip)){
+                    return $this;
+                }
+
+                // Check if address is valid
+                if (!empty($arrivalCountry)){
                     $total = $observer->getTotal();
                     $currencyCode = $this->_priceCurrency->getCurrency()->getCurrencyCode();
                     $transactionDatetime = $this->helper->dateFormat(date('Y-m-d H:i:s'));
 
+                    // Generate hash for current address
+                    $currentAddressHash = $this->hashAddress($shippingAddress);
+                    $cachedAddressHash = $this->cache->load($this->cacheKeyAddress);
+                    $cachedTaxData = $this->cache->load($this->cacheKeyTaxData);
+
+                    if ($cachedAddressHash === $currentAddressHash && $cachedTaxData) {
+                        // Use cached data
+                        $vatData = unserialize($cachedTaxData);
+                        $this->applyTaxDataToQuote($quote, $vatData, $observer);
+                        return;
+                    }
+
+                    // Build API request parameters
                     $params = [];
                     foreach ($items as $item) {
+                        $transactionSum = $item->getRowTotalInclTax();
+                        if ($transactionSum === null) {
+                            continue;
+                        }
                         $params[] = [
                             'transaction_datetime' => $transactionDatetime,
                             'currency' => $currencyCode,
-                            'transaction_sum' => $item->getRowTotalInclTax(),
+                            'transaction_sum' => $transactionSum,
                             'arrival_country' => $arrivalCountry,
                             'arrival_zip' => $arrivalZip,
                             'transaction_id' => $item->getProductId(),
+                            'vat_number_of_buyer' => $vatId
                         ];
                     }
 
                     if (!empty($params)) {
+                        // Fetch tax data from API
                         $vatData = $this->client->taxRate($params);
-                        $tax = 0;
-                        if (!empty($vatData)) {
-                            //set tax to items
-                            foreach ($vatData as $data) {
-                                foreach ($items as $item) {
-                                    if ($item->getProductId() == $data->transaction_id) {
-                                        $item->setTaxAmount($data->vat);
-                                        $item->setTaxPercent($data->vat_percent);
-                                        break;
-                                    }
-                                }
-                                $tax = $tax + $data->vat;
-                            }
-                        }
 
-                        //get shipping info
-                        $shippingPrice = $shippingAddress->getShippingAmount();
-                        $shippingParams = [
-                            'arrival_country' => $arrivalCountry,
-                            'arrival_zip' => $arrivalZip,
-                            'currency' => $currencyCode,
-                            'transaction_datetime' => $transactionDatetime,
-                            'transaction_sum' => $shippingPrice
-                        ];
+                        // Cache the new tax data
+                        $this->cache->save($currentAddressHash, $this->cacheKeyAddress, ['TAX_CACHE'], $this->cacheLifetime);
+                        $this->cache->save(serialize($vatData), $this->cacheKeyTaxData, ['TAX_CACHE'], $this->cacheLifetime);
 
-                        //API request to vatcompliance get shipping tax info
-                        $shippingRate = $this->client->shippingRate($shippingParams);
-                        $shippingTax = 0;
-                        if (!empty($shippingRate)) {
-                            //Get shipping price
-                            $shippingTax = $shippingRate[0]->vat;
-                        }
-
-                        $tax = $tax + $shippingTax;
-
-                        //tax for quote
-                        $quote->setTaxAmount($tax);
-                        $quote->setBaseTaxAmount($tax);
-                        $quote->setGrandTotal($quote->getGrandTotal() + $tax);
-                        $quote->setBaseGrandTotal($quote->getBaseGrandTotal() + $tax);
-                        $quote->setTotalsCollectedFlag(false);
-
-                        //shipping address tax
-                        $shippingAddress->setShippingTaxAmount($shippingTax);
-                        $shippingAddress->setBaseShippingTaxAmount($shippingTax);
-                        $shippingAddress->setTaxAmount($tax);
-                        $shippingAddress->setBaseTaxAmount($tax);
-
-                        //tax to total
-                        $total->addTotalAmount('tax', $tax);
-                        $total->addBaseTotalAmount('tax', $tax);
-                        $total->setGrandTotal((float)$total->getGrandTotal() + $tax);
-                        $total->setBaseGrandTotal((float)$total->getBaseGrandTotal() + $tax);
+                        // Apply tax data to the quote
+                        $this->applyTaxDataToQuote($quote, $vatData, $observer);
                     }
                 }
             }
         }
 
         return $this;
+    }
+
+    /**
+     * Generate a hash for the shipping address
+     */
+    private function hashAddress($address)
+    {
+        $addressData = [
+            is_array($address->getStreet()) ? implode(' ', $address->getStreet()) : $address->getStreet(),
+            $address->getCity(),
+            $address->getPostcode(),
+            $address->getRegion(),
+            $address->getCountryId(),
+            !empty($address->getVatId()) ? $address->getVatId() : 'none',
+        ];
+        $addressData = array_map(function ($value) {
+            if (is_array($value)) {
+                return implode(', ', $value);
+            }
+            return (string)$value;
+        }, $addressData);
+        $addressData = array_map('strval', $addressData);
+        return hash('sha256', implode('|', $addressData));
+    }
+
+    /**
+     * Apply tax data to the quote
+     */
+    private function applyTaxDataToQuote($quote, $vatData, $observer)
+    {
+        $tax = 0;
+        $items = $quote->getItemsCollection();
+
+        foreach ($vatData as $data) {
+            foreach ($items as $item) {
+                if ($item->getProductId() == $data->transaction_id) {
+                    $item->setTaxAmount($data->tax_amount);
+                    $item->setTaxPercent($data->tax_rate);
+                    break;
+                }
+            }
+            $tax += $data->tax_amount;
+        }
+
+        $quote->setTaxAmount($tax);
+        $quote->setBaseTaxAmount($tax);
+        $quote->setGrandTotal($quote->getGrandTotal() + $tax);
+        $quote->setBaseGrandTotal($quote->getBaseGrandTotal() + $tax);
+        $quote->setTotalsCollectedFlag(false);
+
+        $total = $observer->getTotal();
+        $total->addTotalAmount('tax', $tax);
+        $total->addBaseTotalAmount('tax', $tax);
+        $total->setGrandTotal((float)$total->getGrandTotal() + $tax);
+        $total->setBaseGrandTotal((float)$total->getBaseGrandTotal() + $tax);
     }
 }
