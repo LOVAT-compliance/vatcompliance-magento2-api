@@ -114,8 +114,10 @@ class ChangeTaxTotal implements ObserverInterface
                     $cachedTaxData = $this->cache->load($this->cacheKeyTaxData);
 
                     if ($cachedAddressHash === $currentAddressHash && $cachedTaxData) {
-                        // Use cached data
-                        $vatData = unserialize($cachedTaxData);
+                        $vatData = @unserialize($cachedTaxData);
+                        if (!$vatData || !is_array($vatData)) {
+                            $vatData = [];
+                        }
                         $this->applyTaxDataToQuote($quote, $vatData, $observer);
                         return;
                     }
@@ -123,7 +125,7 @@ class ChangeTaxTotal implements ObserverInterface
                     // Build API request parameters
                     $params = [];
                     foreach ($items as $item) {
-                        $transactionSum = $item->getRowTotalInclTax();
+                        $transactionSum = $item->getRowTotal();
                         if ($transactionSum === null) {
                             continue;
                         }
@@ -139,15 +141,20 @@ class ChangeTaxTotal implements ObserverInterface
                     }
 
                     if (!empty($params)) {
-                        // Fetch tax data from API
-                        $vatData = $this->client->taxRate($params);
+                        try {
+                            $vatData = $this->client->taxRate($params);
 
-                        // Cache the new tax data
-                        $this->cache->save($currentAddressHash, $this->cacheKeyAddress, ['TAX_CACHE'], $this->cacheLifetime);
-                        $this->cache->save(serialize($vatData), $this->cacheKeyTaxData, ['TAX_CACHE'], $this->cacheLifetime);
+                            if (!$vatData || !is_array($vatData)) {
+                                $vatData = [];
+                            }
 
-                        // Apply tax data to the quote
-                        $this->applyTaxDataToQuote($quote, $vatData, $observer);
+                            $this->cache->save($currentAddressHash, $this->cacheKeyAddress, ['TAX_CACHE'], $this->cacheLifetime);
+                            $this->cache->save(serialize($vatData), $this->cacheKeyTaxData, ['TAX_CACHE'], $this->cacheLifetime);
+
+                            $this->applyTaxDataToQuote($quote, $vatData, $observer);
+                        } catch (\Exception $e) {
+                            // Ignoring exceptions here to avoid breaking checkout process
+                        }
                     }
                 }
             }
@@ -170,10 +177,7 @@ class ChangeTaxTotal implements ObserverInterface
             !empty($address->getVatId()) ? $address->getVatId() : 'none',
         ];
         $addressData = array_map(function ($value) {
-            if (is_array($value)) {
-                return implode(', ', $value);
-            }
-            return (string)$value;
+            return is_array($value) ? implode(', ', $value) : (string)$value;
         }, $addressData);
         $addressData = array_map('strval', $addressData);
         return hash('sha256', implode('|', $addressData));
