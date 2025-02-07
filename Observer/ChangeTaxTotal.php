@@ -191,27 +191,55 @@ class ChangeTaxTotal implements ObserverInterface
         $tax = 0;
         $items = $quote->getItemsCollection();
 
+        $appliedItemsTaxAmount = 0; // tax amount for all qty
+        $appliedItemsBaseTaxAmount = 0; // tax amount for all qty
+
         foreach ($vatData as $data) {
             foreach ($items as $item) {
                 if ($item->getProductId() == $data->transaction_id) {
-                    $item->setTaxAmount($data->tax_amount);
+
+                    $appliedItemTaxAmount = ((float)$item->getTaxPercent() / 100) * $item->getPrice(); // tax amount per 1 item
+                    $appliedItemBaseTaxAmount = ((float)$item->getTaxPercent() / 100) * $item->getBasePrice(); // tax amount per 1 item
+
                     $item->setTaxPercent($data->tax_rate);
+                    $item->setTaxAmount($data->tax_amount);
+                    $item->setBaseTaxAmount($data->tax_amount);
+                    $item->setPriceInclTax($item->getPriceInclTax() - $appliedItemTaxAmount + $data->tax_amount / $item->getQty());
+                    $item->setBasePriceInclTax($item->getBasePriceInclTax() - $appliedItemBaseTaxAmount  + $data->tax_amount / $item->getQty());
+                    $item->setRowTotalInclTax($item->getPriceInclTax() * $item->getQty());
+                    $item->setBaseRowTotalInclTax($item->getBasePriceInclTax() * $item->getQty());
+                    $item->setAppliedTaxes([]);
+
+                    $appliedItemsTaxAmount += $appliedItemTaxAmount;
+                    $appliedItemsBaseTaxAmount += $appliedItemBaseTaxAmount;
+
                     break;
                 }
             }
             $tax += $data->tax_amount;
         }
 
-        $quote->setTaxAmount($tax);
-        $quote->setBaseTaxAmount($tax);
-        $quote->setGrandTotal($quote->getGrandTotal() + $tax);
-        $quote->setBaseGrandTotal($quote->getBaseGrandTotal() + $tax);
+        $quote->setGrandTotal($quote->getGrandTotal() - $appliedItemsTaxAmount + $tax);
+        $quote->setBaseGrandTotal($quote->getBaseGrandTotal() - $appliedItemsBaseTaxAmount + $tax);
         $quote->setTotalsCollectedFlag(false);
 
+
+        /* totals */
         $total = $observer->getTotal();
-        $total->addTotalAmount('tax', $tax);
-        $total->addBaseTotalAmount('tax', $tax);
-        $total->setGrandTotal((float)$total->getGrandTotal() + $tax);
-        $total->setBaseGrandTotal((float)$total->getBaseGrandTotal() + $tax);
+
+        // get previously applied Tax
+        $appliedTotalTaxAmount = (float)$total->getTaxAmount();
+        $appliedTotalBaseTaxAmount = (float)$total->getBaseTaxAmount();
+
+        $total->setAppliedTaxes([]);
+        $total->setItemsAppliedTaxes([]);
+        $total->setTaxAmount($tax);
+        $total->setBaseTaxAmount($tax);
+
+        $total->setSubtotalInclTax($total->getSubtotalInclTax() - $appliedTotalTaxAmount + $tax);
+        $total->setBaseSubtotalTotalInclTax($total->getBaseSubtotalTotalInclTax() - $appliedTotalBaseTaxAmount + $tax);
+        $total->setBaseSubtotalInclTax($total->getBaseSubtotalInclTax() - $appliedTotalBaseTaxAmount + $tax);
+        $total->setGrandTotal($total->getGrandTotal() - $appliedTotalTaxAmount + $tax);
+        $total->setBaseGrandTotal($total->getBaseGrandTotal() - $appliedTotalBaseTaxAmount + $tax);
     }
 }
