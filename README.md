@@ -27,4 +27,4 @@ php bin/magento cache:clean
 Next, create a new integration for API requests. In more detail how to create an integration is described [Here](https://www.mageplaza.com/kb/how-to-create-new-api-information-for-integration-magento-2.html)
 
 ## Support
-If you find a bug in our extension or have general questions about Lovat, please [contact our support team.](https://lappa.org/contacts)
+If you find a bug in our extension or have general questions about Lovat, please [contact our support team.](https://lappa.org/contact-us/)
