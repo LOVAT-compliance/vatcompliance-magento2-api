@@ -6,7 +6,7 @@ use Lovat\Api\Model\Cache as LovatCache;
 
 class Configuration
 {
-    const LOVAT_API_URL = 'https://merchant.vatcompliance.co/api/1/';
+    const LOVAT_API_URL = 'https://api.lappa.org/api/1/';
     const TAX_RATE_LIST = 'tax_rate_list';
     const SHIPPING_TAX_RATE = 'shipping_tax_rate';
 
