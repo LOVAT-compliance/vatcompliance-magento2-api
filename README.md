@@ -1,7 +1,7 @@
-# Lovat_Api
+# Lappa_Api
 
 ## Description
-Magento 2 REST API Lovat Api
+Magento 2 REST API Lappa Api
 
 ## Plugin Installation
 
@@ -27,4 +27,4 @@ php bin/magento cache:clean
 Next, create a new integration for API requests. In more detail how to create an integration is described [Here](https://developers.lappa.org/integrations-lovat-vatcompliance-developer-api/magento-2/)
 
 ## Support
-If you find a bug in our extension or have general questions about Lovat, please [contact our support team.](https://lappa.org/contact-us/)
+If you find a bug in our extension or have general questions about Lappa, please [contact our support team.](https://lappa.org/contact-us/)
